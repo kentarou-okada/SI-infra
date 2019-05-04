@@ -1,21 +1,169 @@
-#seleniumは標準ライブラリではないので、要インストール
+#前提
+#このコードを使用するには、以下の前提条件があります
+#1.PCにpython3.x.xをインストールする必要があります
+#2.PCにgoogle chromeがインストールされている必要があります
+#3.PCのgoogle chromeのversionに合ったchrome driver(chromedriver.exe)をダウンロードする必要があります
+# ※chromedriver.exeをダウンロードした際に、chromedriver.exeが置いてあるフォルダのパスを覚えておいてください。
+#   132行目のパスを書き換える際に必要となります。
+#4.pythonをインストール後に、コマンドプロンプト上で以下のコマンドを実行し、selenium という
+# ライブラリをインストールする必要があります
+#python -m pip install selenium
+#5.kotのログインID,パスワード等、以下のコード内で自身の情報を入力しなければならない変更箇所は6個あります
+# 変更が必要な個所はコメントで ☆☆☆☆要変更箇所☆☆☆☆と記載しています
+
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
 import time
 
-#chromeのdriverを保存したパスを指定
+#Kotで特定の日時に勤怠情報を入力するには、htBlock-selectOtherの後の数字は勤怠入力する日から1日引いた数を入力し
+# button_xxxの末尾2ケタの数字は勤怠入力する日付を入力する必要がある。
+#例1.1日の日付を入力したい場合、(By.CLASS_NAME, 'htBlock-selectOther')[0]、('#button_0560012277901')にする
+#例2.15日の日付を入力したい場合、(By.CLASS_NAME, 'htBlock-selectOther')[14]、('#button_0560012277915')にする
+#おそらく人によってbutton_の後に続く数字は違うと思われるので、kotにログイン後、F12を押下し
+#htmlの構文の中から該当する文字列を探す必要があります
+#※button_0等で検索すれば引っかかるかもしれないです。
+
+#===================================================
+#以下はkot上での勤怠入力日および勤務時間の指定を関数にしたもの
+
+def kintai_nyuuryokubi(day):
+    day1 = int(day) - 1
+    if 0 < day1 < 10:
+        days = '0' + str(day1)
+
+        # button_以降の数字はおそらく、人によって異なる。☆☆☆☆要変更箇所☆☆☆☆
+        button_day = '#button_05600122779' + days
+        element = driver.find_elements(By.CLASS_NAME, 'htBlock-selectOther')[day1]
+        select_element = Select(element)
+        select_element.select_by_value(button_day)
+        time.sleep(2)
+
+    else:
+        days = day1
+
+        # button_以降の数字はおそらく、人によって異なる。☆☆☆☆要変更箇所☆☆☆☆
+        button_day = '#button_05600122779' + day
+        element = driver.find_elements(By.CLASS_NAME, 'htBlock-selectOther')[day1]
+        select_element = Select(element)
+        select_element.select_by_value(button_day)
+        time.sleep(2)
+
+def kinmu_jikan(time):
+    #現場の業務開始時刻を入力。☆☆☆☆要変更箇所☆☆☆☆
+    kaisi_jikoku = "0900"
+
+    #開始～終了までの時間を入力
+    start = driver.find_elements(By.NAME,"recording_type_code_1")[0]
+    select_element = Select(start)
+    select_element.select_by_value('1')
+
+    end = driver.find_elements(By.NAME,"recording_type_code_2")[0]
+    select_element = Select(end)
+    select_element.select_by_value('2')
+
+    elem_search_word1 = driver.find_element_by_id("recording_timestamp_time_1")
+    elem_search_word1.send_keys(kaisi_jikoku)
+
+    elem_search_word2 = driver.find_element_by_id("recording_timestamp_time_2")
+    elem_search_word2.send_keys(time)
+
+    #打刻登録をクリック
+    elem_search_btn = driver.find_element_by_id("button_01")
+    elem_search_btn.click()
+#===================================================
+
+
+nissuu = input('何日分の勤怠を入力しますか？例. 10～14日の5日分を入力する場合：5\n何日分？(最大は5日分です)：')
+
+while 5 < int(nissuu) or 0 > int(nissuu):
+    nissuu = input('1～5の間で入力して下さい：\n何日分？(最大は5日分です)：')
+
+    if 0 < int(nissuu) < 6:
+        break
+
+if int(nissuu) == 1:
+    kintai_day1 = input('1日目の勤怠を入力する日を指定して下さい。例. 10日の場合：10\n勤怠を入力する日：')
+    print('\n')
+    end_time1 = input('1日目の退勤時刻を入力して下さい。例. 19時00分退勤の場合：1900\n退勤時刻：')
+    print('\n')
+
+elif int(nissuu) == 2:
+    kintai_day1 = input('1日目の勤怠を入力する日を指定して下さい。例. 10日の場合：10\n勤怠を入力する日：')
+    print('\n')
+    end_time1 = input('1日目の退勤時刻を入力して下さい。例. 19時00分退勤の場合：1900\n退勤時刻：')
+    print('\n')
+    kintai_day2 = input('2日目の勤怠を入力する日を指定して下さい。\n勤怠を入力する日：')
+    end_time2 = input('2日目の退勤時刻を入力して下さい。\n退勤時刻：')
+    print('\n')
+
+elif int(nissuu) == 3:
+    kintai_day1 = input('1日目の勤怠を入力する日を指定して下さい。例. 10日の場合：10\n勤怠を入力する日：')
+    print('\n')
+    end_time1 = input('1日目の退勤時刻を入力して下さい。例. 19時00分退勤の場合：1900\n退勤時刻：')
+    print('\n')
+    kintai_day2 = input('2日目の勤怠を入力する日を指定して下さい。\n勤怠を入力する日：')
+    print('\n')
+    end_time2 = input('2日目の退勤時刻を入力して下さい。\n退勤時刻：')
+    print('\n')
+    kintai_day3 = input('3日目の勤怠を入力する日を指定して下さい。\n勤怠を入力する日：')
+    print('\n')
+    end_time3 = input('3日目の退勤時刻を入力して下さい。\n退勤時刻：')
+    print('\n')
+
+elif int(nissuu) == 4:
+    kintai_day1 = input('1日目の勤怠を入力する日を指定して下さい。例. 10日の場合：10\n勤怠を入力する日：')
+    print('\n')
+    end_time1 = input('1日目の退勤時刻を入力して下さい。例. 19時00分退勤の場合：1900\n退勤時刻：')
+    print('\n')
+    kintai_day2 = input('2日目の勤怠を入力する日を指定して下さい。\n勤怠を入力する日：')
+    print('\n')
+    end_time2 = input('2日目の退勤時刻を入力して下さい。\n退勤時刻：')
+    print('\n')
+    kintai_day3 = input('3日目の勤怠を入力する日を指定して下さい。\n勤怠を入力する日：')
+    print('\n')
+    end_time3 = input('3日目の退勤時刻を入力して下さい。\n退勤時刻：')
+    print('\n')
+    kintai_day4 = input('4日目の勤怠を入力する日を指定して下さい。\n勤怠を入力する日：')
+    print('\n')
+    end_time4 = input('4日目の退勤時刻を入力して下さい。\n退勤時刻：')
+
+elif int(nissuu) == 5:
+    kintai_day1 = input('1日目の勤怠を入力する日を指定して下さい。例. 10日の場合：10\n勤怠を入力する日：')
+    print('\n')
+    end_time1 = input('1日目の退勤時刻を入力して下さい。例. 19時00分退勤の場合：1900\n退勤時刻：')
+    print('\n')
+    kintai_day2 = input('2日目の勤怠を入力する日を指定して下さい。\n勤怠を入力する日：')
+    print('\n')
+    end_time2 = input('2日目の退勤時刻を入力して下さい。\n退勤時刻：')
+    print('\n')
+    kintai_day3 = input('3日目の勤怠を入力する日を指定して下さい。\n勤怠を入力する日：')
+    print('\n')
+    end_time3 = input('3日目の退勤時刻を入力して下さい。\n退勤時刻：')
+    print('\n')
+    kintai_day4 = input('4日目の勤怠を入力する日を指定して下さい。\n勤怠を入力する日：')
+    print('\n')
+    end_time4 = input('4日目の退勤時刻を入力して下さい。\n退勤時刻：')
+    print('\n')
+    kintai_day5 = input('5日目の勤怠を入力する日を指定して下さい。\n勤怠を入力する日：')
+    print('\n')
+    end_time5 = input('5日目の退勤時刻を入力して下さい。\n退勤時刻：')
+    print('\n')
+
+#chromeのdriverを保存したパスを指定 ☆☆☆☆要変更箇所☆☆☆☆
 driver = webdriver.Chrome("C:\\chromedriver_win32\\chromedriver.exe")
 
 #KOTにアクセス
 driver.get('https://s3.kingtime.jp/independent/recorder/personal/')
 
 elem_search_word = driver.find_element_by_id("id")
-#ログインIDを入力
+
+#ログインIDを入力 ☆☆☆☆要変更箇所☆☆☆☆
 elem_search_word.send_keys("7m530000xxxx")
 
 elem_search_word = driver.find_element_by_id("password")
-#パスワードを入力
+
+#パスワードを入力 ☆☆☆☆要変更箇所☆☆☆☆
 elem_search_word.send_keys("xxxxxxxx")
 
 #OKをクリック
@@ -33,41 +181,58 @@ driver.find_elements_by_class_name('text-middle')[0].click()
 
 time.sleep(2)
 
-#3/19の打刻編集を選択。htBlock-selectOtherの後の数字とbutton_xxxの数字は日付によって変わる。現状は都度確認が必要なため、要改善。
-element = driver.find_elements(By.CLASS_NAME, 'htBlock-selectOther')[18]
-select_element = Select(element)
-select_element.select_by_value('#button_0560012277919')
-time.sleep(2)
+if int(nissuu) == 1:
+    kintai_nyuuryokubi(kintai_day1)
+    kinmu_jikan(end_time1)
+    time.sleep(2)
 
-#開始～終了までの時間を入力
-start = driver.find_elements(By.NAME,"recording_type_code_1")[0]
-select_element = Select(start)
-select_element.select_by_value('1')
+elif int(nissuu) == 2:
+    kintai_nyuuryokubi(kintai_day1)
+    kinmu_jikan(end_time1)
+    time.sleep(2)
+    kintai_nyuuryokubi(kintai_day2)
+    kinmu_jikan(end_time2)
+    time.sleep(2)
 
-rest1 = driver.find_elements(By.NAME,"recording_type_code_2")[0]
-select_element = Select(rest1)
-select_element.select_by_value('3')
+elif int(nissuu) == 3:
+    kintai_nyuuryokubi(kintai_day1)
+    kinmu_jikan(end_time1)
+    time.sleep(2)
+    kintai_nyuuryokubi(kintai_day2)
+    kinmu_jikan(end_time2)
+    time.sleep(2)
+    kintai_nyuuryokubi(kintai_day3)
+    kinmu_jikan(end_time3)
+    time.sleep(2)
 
-rest2 = driver.find_elements(By.NAME,"recording_type_code_3")[0]
-select_element = Select(rest2)
-select_element.select_by_value('4')
+elif int(nissuu) == 4:
+    kintai_nyuuryokubi(kintai_day1)
+    kinmu_jikan(end_time1)
+    time.sleep(2)
+    kintai_nyuuryokubi(kintai_day2)
+    kinmu_jikan(end_time2)
+    time.sleep(2)
+    kintai_nyuuryokubi(kintai_day3)
+    kinmu_jikan(end_time3)
+    time.sleep(2)
+    kintai_nyuuryokubi(kintai_day4)
+    kinmu_jikan(end_time4)
+    time.sleep(2)
 
-end = driver.find_elements(By.NAME,"recording_type_code_4")[0]
-select_element = Select(end)
-select_element.select_by_value('2')
+elif int(nissuu) == 5:
+    kintai_nyuuryokubi(kintai_day1)
+    kinmu_jikan(end_time1)
+    time.sleep(2)
+    kintai_nyuuryokubi(kintai_day2)
+    kinmu_jikan(end_time2)
+    time.sleep(2)
+    kintai_nyuuryokubi(kintai_day3)
+    kinmu_jikan(end_time3)
+    time.sleep(2)
+    kintai_nyuuryokubi(kintai_day4)
+    kinmu_jikan(end_time4)
+    time.sleep(2)
+    kintai_nyuuryokubi(kintai_day5)
+    kinmu_jikan(end_time5)
+    time.sleep(2)
 
-elem_search_word1 = driver.find_element_by_id("recording_timestamp_time_1")
-elem_search_word1.send_keys("0900")
-
-elem_search_word2 = driver.find_element_by_id("recording_timestamp_time_2")
-elem_search_word2.send_keys("1200")
-
-elem_search_word3 = driver.find_element_by_id("recording_timestamp_time_3")
-elem_search_word3.send_keys("1300")
-
-elem_search_word4 = driver.find_element_by_id("recording_timestamp_time_4")
-elem_search_word4.send_keys("2000")
-
-#打刻登録をクリック
-elem_search_btn = driver.find_element_by_id("button_01")
-elem_search_btn.click()
