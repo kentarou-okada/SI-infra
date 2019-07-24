@@ -1,0 +1,4 @@
+Sub 指定文字列のフォント変更Test()
+    Call 指定文字列のフォント変更("access-policies_name", RGB(255, 0, 0), False)
+ '// ↑この場合はaccess-policies_nameという文字列を赤に変更。末尾をtrueにすれば太字になる。
+End Sub
