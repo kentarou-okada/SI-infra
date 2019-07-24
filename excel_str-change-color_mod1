@@ -1,0 +1,40 @@
+Option Explicit
+
+Sub 指定文字列のフォント変更(a_sSearch, a_lColor, a_bBold)
+    Dim f   As Font     '// Fontオブジェクト
+    Dim i               '// 引数文字列のセルの位置
+    Dim iLen            '// 引数文字列の文字数
+    Dim r   As Range    '// セル範囲の１セル
+    
+    iLen = Len(a_sSearch)
+    i = 1
+    
+    '// 選択セル範囲を１セルずつループ
+    For Each r In Selection
+        '// 指定されたセルの文字列から引数文字列を全て検索
+        Do
+            '// セル文字列から引数文字列を検索
+            i = InStr(i, r.Value, a_sSearch)
+            
+            '// 引数文字列が存在しない場合
+            If (i = 0) Then
+                '// 次検索用に検索開始位置を1に初期化
+                i = 1
+                
+                '// このセルの処理を終了
+                Exit Do
+            End If
+            
+            '// 引数文字列部分のFontオブジェクトを取得
+            Set f = r.Characters(i, iLen).Font
+            
+            '// フォント設定
+            f.Color = a_lColor  '// 文字色
+            f.Bold = a_bBold    '// 太さ
+            
+            '// 次検索用に検索開始位置をずらす
+            i = i + 1
+        Loop
+    Next
+End Sub
+
