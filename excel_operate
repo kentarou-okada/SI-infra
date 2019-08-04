@@ -1,0 +1,30 @@
+import openpyxl as px #openpyxlをコード内でpxとして使えるようにし、import
+import glob #引数に指定されたパターンにマッチするファイルパス名を取得
+
+###### excelファイルを生成
+
+print(glob.glob("*.xlsx")) #xlsxの拡張子がつくファイルのファイル名を出力
+
+wb = px.Workbook() #excelのworkbookオブジェクトをwbとして作成
+sheet = wb.active #対象のシートをsheetとして指定？
+sheet.title = "test_sheet_1" #sheetのシート名をtest_sheet_1として設定
+wb.save("test.xlsx") #excelファイルをtest.xlsxとして保存。ここでexcelファイルが生成される
+print(glob.glob("*.xlsx")) #ファイルが生成されたかどうかを確認
+
+###### sheet追加
+
+wb=px.load_workbook(r"C:\Users\ai-ok\Desktop\python_project\pytoexcel\test.xlsx", data_only=True)
+#↑生成したexcelファイルを指定
+
+hostname =["L3SW-1" , "L3SW-2" , "L2SW-1" , "L2SW-2"]
+#hostnameのリストを作成
+
+for add_sheet in hostname:
+    wb.create_sheet(add_sheet)
+
+#hostnameのリストに含まれる名前の分だけシートを生成
+
+wb.save(r'C:\Users\ai-ok\Desktop\python_project\pytoexcel\test.xlsx')
+
+
+
