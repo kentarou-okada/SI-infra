@@ -1,0 +1,9 @@
+@Echo off
+Set SERVER=ipアドレス
+Set USERNAME=ユーザ名
+Set PASSWORD=パスワード
+Cmdkey /generic:TERMSRV/%SERVER% /user:%USERNAME% /pass:%PASSWORD%
+Timeout 2
+Start mstsc /v:%SERVER%
+Timeout 15
+Cmdkey /delete:TERMSRV/%SERVER% 
