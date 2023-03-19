@@ -1,0 +1,56 @@
+Option Explicit
+
+Sub input_schedule()
+
+    Dim intFF_out As Integer            ' FreeFile値_出力用
+    Dim file_path As String             ' Excel保存パス
+    Dim file_name As String             ' 出力ファイル名(IP/パス等)
+    Dim strFileName_out As String       ' 出力するファイル名(フルパス)
+    Dim User As String                  ' ログインユーザ名
+    Dim Password As String              ' パスワード
+    Dim DriverPass As String            ' chrome driver保存先
+    Dim i As Integer
+    Dim KintaiDay(15) As Integer
+    Dim Schedule(15) As String
+    Dim wbKot As Workbook
+    Dim wsKot As Worksheet
+    Set wsKot = ThisWorkbook.Worksheets("kot")
+    
+
+    file_path = ThisWorkbook.Path
+    file_name = "kkkot.py"
+    User = wsKot.Cells(3, 4).Value
+    Password = wsKot.Cells(4, 4).Value
+    DriverPass = wsKot.Cells(5, 4).Value
+    strFileName_out = file_path + "\" + file_name
+    
+    ' FreeFile値の取得(以降この値で入出力する)
+    intFF_out = FreeFile
+
+    ' 指定ファイルをOPEN(入力モード)
+    Open strFileName_out For Append As #intFF_out
+
+For i = 8 To 12
+ 
+    If wsKot.Cells(i, 6) <> "" Then
+        
+        KintaiDay(i) = CInt(wsKot.Cells(i, 3))
+        Schedule(i) = wsKot.Cells(i, 6)
+
+        Print #intFF_out, "kinmu_day = " + "'" + CStr(KintaiDay(i)) + "'"
+        Print #intFF_out, "schedule = " + "'" + Schedule(i) + "'"
+        Print #intFF_out, "schedule_nyuuryoku(kinmu_day)"
+        Print #intFF_out, "sinsei(schedule)"
+        Print #intFF_out, "time.sleep(1)"
+
+    End If
+
+Next
+
+        Print #intFF_out, "driver.quit()"
+
+Close #intFF_out
+
+End Sub
+
+
