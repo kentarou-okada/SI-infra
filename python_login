@@ -1,0 +1,104 @@
+Option Explicit
+
+Sub web_kintai_login()
+
+    Dim intFF_out As Integer            ' FreeFile値_出力用
+    Dim file_path As String             ' Excel保存パス
+    Dim file_name As String             ' 出力ファイル名(IP/パス等)
+    Dim strFileName_out As String       ' 出力するファイル名(フルパス)
+    Dim User As String                  ' ログインユーザ名
+    Dim Password As String              ' パスワード
+    Dim DriverPass As String            ' chrome driver保存先
+    Dim i As Integer
+    Dim KintaiDay(15) As Integer
+    Dim StartTime(15) As String
+    Dim EndTime(15) As String
+    Dim Rng1 As Range
+    Dim Rng2 As Range
+    Dim Rng3 As Range
+    Dim Rng4 As Range
+    Dim Rng5 As Range
+    Dim clearRng As Range
+    Dim wbWebKintai As Workbook
+    Dim wsWebKintai As Worksheet
+    Set wsWebKintai = ThisWorkbook.Worksheets("Web勤怠")
+    Dim Stream As Object                ' .pyファイルを作成する際に文字コードをUTF-8にするために使用
+    
+
+    file_path = ThisWorkbook.Path
+    file_name = "web_kintai.py"
+    User = wsWebKintai.Cells(2, 4).Value
+    Password = wsWebKintai.Cells(3, 4).Value
+    DriverPass = wsWebKintai.Cells(4, 4).Value
+    strFileName_out = file_path + "\" + file_name
+    
+Set Stream = CreateObject("ADODB.Stream")
+  
+ ' ストリームの文字コードをUTF8に設定する
+ Stream.Charset = "UTF-8"
+ 
+ ' ファイルのタイプ(1:バイナリ 2:テキスト)
+ Stream.Type = 2
+ 
+ ' Streamオブジェクトを開いて、ファイルの内容を読み込む
+ Stream.Open
+ Stream.LoadFromFile (strFileName_out)
+
+ 'Sizeプロパティはストリームのサイズをバイト数で返してくれる。
+ 'この値をPositionプロパティに設定することで､ファイルの終端にポインタを持っていってくれることで追記可能｡
+ Stream.Position = Stream.Size 'ポインタを終端へ
+ 
+ '追加する文字列を書き込む
+ Stream.WriteText "#webdriver格納パスを指定する場合" & vbCrLf
+ Stream.WriteText "custom_path = r'" + DriverPass + "'" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "#webdriverのパス" & vbCrLf
+ Stream.WriteText "driver_path = ChromeDriverManager(path=custom_path).install()" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "driver = webdriver.Chrome(driver_path)" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "#以下のURLへログイン" & vbCrLf
+ Stream.WriteText "driver.get('https://s3.kingtime.jp/admin/')" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "#スタッフコードを入力する枠のhtml内の名前(username)を指定し、elem_search_userに格納" & vbCrLf
+ Stream.WriteText "elem_search_user = driver.find_element_by_name('login_id')" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "#パスワードを入力する枠のhtml内の名前(password)を指定し、elem_search_passに格納" & vbCrLf
+ Stream.WriteText "elem_search_pass = driver.find_element_by_name('login_password')" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "#スタッフコードを入力する枠にエクセル内のスタッフコードを入力" & vbCrLf
+ Stream.WriteText "elem_search_user.send_keys('" + User + "')" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "#パスワードを入力する枠にエクセル内のパスワードを入力" & vbCrLf
+ Stream.WriteText "elem_search_pass.send_keys('" + Password + "')" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "#OKボタンのhtml内の名前(btnLogin)を指定し、elem_search_btnに格納" & vbCrLf
+ Stream.WriteText "elem_search_btn = driver.find_element_by_id('login_button')" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "#OKボタンをクリック" & vbCrLf
+ Stream.WriteText "elem_search_btn.click()" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "#画面が遷移し、勤怠の項目が表示されるまで待機。15秒しても画面遷移しなければタイムアウト判定。" & vbCrLf
+ Stream.WriteText "WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.ID, 'intro_start')))" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "#勤怠ボタンのhtml内の名前(intro_start)を指定し、elem_search_start_btnに格納" & vbCrLf
+ Stream.WriteText "elem_search_kintai_btn = driver.find_element_by_id('intro_start')" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "elem_search_kintai_btn.click()" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "time.sleep(2)" & vbCrLf
+ 
+ ' ストリームに名前を付けて保存する(1は新規作成 2は上書き保存)
+ Stream.SaveToFile (strFileName_out), 2
+ 
+ ' ストリームを閉じる
+ Stream.Close
+
+Set Stream = Nothing
+    
+With CreateObject("Shell.Application")
+    .ShellExecute strFileName_out
+End With
+
+End Sub
+
