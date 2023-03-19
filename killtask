@@ -1,0 +1,78 @@
+Option Explicit
+
+Sub killtask1()
+
+    Dim intFF_out As Integer            ' FreeFile値_出力用
+    Dim file_path As String             ' Excel保存パス
+    Dim file_name As String             ' 出力ファイル名(IP/パス等)
+    Dim FileName_out As String       ' 出力するファイル名(フルパス)
+    Dim objFSO As Object
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+
+    file_path = ThisWorkbook.Path
+    file_name = "killtask.bat"
+    FileName_out = file_path + "\" + file_name
+
+    ' FreeFile値の取得(以降この値で入出力する)
+    intFF_out = FreeFile
+
+    ' 指定ファイルをOPEN(入力モード)
+    Open FileName_out For Output As #intFF_out
+    '対象セル行取得
+        
+    Print #intFF_out, "@Echo off"
+    Print #intFF_out, "taskkill /F /IM chromedriver.exe"
+    Print #intFF_out, "taskkill /F /IM chrome.exe"
+
+    Close #intFF_out
+
+With CreateObject("Shell.Application")
+    .ShellExecute FileName_out
+End With
+
+Call Sleep_1000
+
+If objFSO.fileexists(FileName_out) = True Then
+    objFSO.DeleteFile FileName_out
+End If
+
+End Sub
+
+Sub killtask2()
+
+    Dim intFF_out As Integer            ' FreeFile値_出力用
+    Dim file_path As String             ' Excel保存パス
+    Dim file_name As String             ' 出力ファイル名(IP/パス等)
+    Dim FileName_out As String       ' 出力するファイル名(フルパス)
+    Dim objFSO As Object
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+
+    file_path = ThisWorkbook.Path
+    file_name = "killtask.bat"
+    FileName_out = file_path + "\" + file_name
+
+    ' FreeFile値の取得(以降この値で入出力する)
+    intFF_out = FreeFile
+
+    ' 指定ファイルをOPEN(入力モード)
+    Open FileName_out For Output As #intFF_out
+    '対象セル行取得
+        
+    Print #intFF_out, "@Echo off"
+    Print #intFF_out, "taskkill /F /IM chromedriver.exe"
+
+    Close #intFF_out
+
+With CreateObject("Shell.Application")
+    .ShellExecute FileName_out
+End With
+
+Call Sleep_3000
+
+If objFSO.fileexists(FileName_out) = True Then
+    objFSO.DeleteFile FileName_out
+End If
+
+End Sub
+
+
