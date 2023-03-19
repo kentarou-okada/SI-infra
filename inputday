@@ -1,0 +1,267 @@
+Option Explicit
+Sub inputday()
+
+    Dim intFF_out As Integer            ' FreeFile値_出力用
+    Dim file_path As String             ' Excel保存パス
+    Dim file_name As String             ' 出力ファイル名(IP/パス等)
+    Dim strFileName_out As String       ' 出力するファイル名(フルパス)
+    Dim User As String                  ' ログインユーザ名
+    Dim Password As String              ' パスワード
+    Dim DriverPass As String            ' chrome driver保存先
+    Dim i As Integer
+    Dim j As Integer
+    Dim KintaiDay(15) As Integer
+    Dim StartHour(15) As String
+    Dim StartMin(15) As String
+    Dim EndHour(15) As String
+    Dim EndMin(15) As String
+    Dim Rest(15) As String
+    Dim Bikou(15) As String
+    Dim Rng1 As Range
+    Dim Rng2 As Range
+    Dim Rng3 As Range
+    Dim wbWebKintai As Workbook
+    Dim wsWebKintai As Worksheet
+    Set wsWebKintai = ThisWorkbook.Worksheets("Web勤怠")
+    Dim wsKinmu As Worksheet
+    Set wsKinmu = ThisWorkbook.Worksheets("勤務表")
+    Dim Stream As Object                ' .pyファイルを作成する際に文字コードをUTF-8にするために使用
+    
+
+    file_path = ThisWorkbook.Path
+    file_name = "web_kintai_input.py"
+    User = wsWebKintai.Cells(2, 4).Value
+    Password = wsWebKintai.Cells(3, 4).Value
+    DriverPass = wsWebKintai.Cells(4, 4).Value
+    strFileName_out = file_path + "\" + file_name
+    
+Set Stream = CreateObject("ADODB.Stream")
+  
+ ' ストリームの文字コードをUTF8に設定する
+ Stream.Charset = "UTF-8"
+ 
+ ' ファイルのタイプ(1:バイナリ 2:テキスト)
+ Stream.Type = 2
+  
+  ' Streamオブジェクトを開いて、ファイルの内容を読み込む
+ Stream.Open
+ Stream.LoadFromFile (strFileName_out)
+
+ 'Sizeプロパティはストリームのサイズをバイト数で返してくれる。
+ 'この値をPositionプロパティに設定することで､ファイルの終端にポインタを持っていってくれることで追記可能｡
+ Stream.Position = Stream.Size 'ポインタを終端へ
+ 
+ '追加する文字列を書き込む
+ Stream.WriteText "#webdriver格納パスを指定する場合" & vbCrLf
+ Stream.WriteText "custom_path = r'" + DriverPass + "'" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "#webdriverのパス" & vbCrLf
+ Stream.WriteText "driver_path = ChromeDriverManager(path=custom_path).install()" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "driver = webdriver.Chrome(driver_path)" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "#以下のURLへログイン" & vbCrLf
+ Stream.WriteText "driver.get('https://mypage.willof.jp/gns_asp_s/servlet/MyPageStaffLoginServlet')" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "#スタッフコードを入力する枠のhtml内の名前(username)を指定し、elem_search_userに格納" & vbCrLf
+ Stream.WriteText "elem_search_user = driver.find_element_by_name('username')" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "#パスワードを入力する枠のhtml内の名前(password)を指定し、elem_search_passに格納" & vbCrLf
+ Stream.WriteText "elem_search_pass = driver.find_element_by_name('password')" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "#スタッフコードを入力する枠にエクセル内のスタッフコードを入力" & vbCrLf
+ Stream.WriteText "elem_search_user.send_keys('" + User + "')" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "#パスワードを入力する枠にエクセル内のパスワードを入力" & vbCrLf
+ Stream.WriteText "elem_search_pass.send_keys('" + Password + "')" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "#OKボタンのhtml内の名前(btnLogin)を指定し、elem_search_btnに格納" & vbCrLf
+ Stream.WriteText "elem_search_btn = driver.find_element_by_class_name('main__btn')" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "#OKボタンをクリック" & vbCrLf
+ Stream.WriteText "elem_search_btn.click()" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "#画面が遷移し、勤怠の項目が表示されるまで待機。15秒しても画面遷移しなければタイムアウト判定。" & vbCrLf
+ Stream.WriteText "WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.CLASS_NAME, 'ds_dropmenu_link')))" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "#勤怠ボタンのhtml内の名前(ds_dropmenu_link)を指定し、elem_search_kintai_btnに格納" & vbCrLf
+ Stream.WriteText "elem_search_kintai_btn = driver.find_element_by_class_name('ds_dropmenu_link')" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "elem_search_kintai_btn.click()" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "time.sleep(2)" & vbCrLf
+ 
+Set Rng1 = wsWebKintai.Range("C7", "F7")
+Set Rng2 = wsWebKintai.Range("C7", "F8")
+Set Rng3 = wsWebKintai.Range("C7", "F9")
+
+If WorksheetFunction.CountA(Rng3) = 12 Then
+    
+    MsgBox CStr(wsWebKintai.Cells(7, 3).Value) + "日 ～ " + CStr(wsWebKintai.Cells(9, 3).Value) + "日までの勤怠を入力します"
+    
+    For i = 7 To 9
+        
+        KintaiDay(i) = CInt(wsWebKintai.Cells(i, 3))
+        StartHour(i) = wsWebKintai.Cells(i + 10, 1)
+        StartMin(i) = wsWebKintai.Cells(i + 10, 2)
+        EndHour(i) = wsWebKintai.Cells(i + 10, 3)
+        EndMin(i) = wsWebKintai.Cells(i + 10, 4)
+        Rest(i) = wsWebKintai.Cells(i, 6)
+        Bikou(i) = wsWebKintai.Cells(i, 7)
+
+        Stream.WriteText "kintai_day1 = " + "'" + CStr(KintaiDay(i)) + "'" & vbCrLf
+        Stream.WriteText "start_time1 = " + "'" + CStr(StartHour(i)) + "'" & vbCrLf
+        Stream.WriteText "start_time2 = " + "'" + CStr(StartMin(i)) + "'" & vbCrLf
+        Stream.WriteText "end_time1 = " + "'" + CStr(EndHour(i)) + "'" & vbCrLf
+        Stream.WriteText "end_time2 = " + "'" + CStr(EndMin(i)) + "'" & vbCrLf
+        Stream.WriteText "resttime = " + "'" + CStr(Rest(i)) + "'" & vbCrLf
+        Stream.WriteText "bikou1 = " + "'" + CStr(Bikou(i)) + "'" & vbCrLf
+        Stream.WriteText "kintai_nyuuryoku(kintai_day1,start_time1,start_time2,end_time1,end_time2,resttime,bikou1)" & vbCrLf
+        Stream.WriteText "time.sleep(2)" & vbCrLf
+    
+    Next
+
+        wsWebKintai.Cells(3, 10) = wsWebKintai.Cells(9, 3)
+
+i = 7
+For i = 7 To 9
+    
+    j = 10
+    
+    For j = 10 To 40
+    If wsKinmu.Cells(j, 1).Value = wsWebKintai.Cells(i, 3).Value Then
+       wsKinmu.Cells(j, 3).Value = wsWebKintai.Cells(i + 7, 4).Value
+       wsKinmu.Cells(j, 6).Value = wsWebKintai.Cells(i + 7, 5).Value
+       wsKinmu.Cells(j, 9).Value = wsWebKintai.Cells(i, 6).Value / 60
+    End If
+      
+    Next
+
+Next
+
+
+ElseIf WorksheetFunction.CountA(Rng3) < 12 And WorksheetFunction.CountA(Rng3) > 8 Then
+        
+        MsgBox CStr(wsWebKintai.Cells(7, 3).Value) + "日 ～ " + CStr(wsWebKintai.Cells(9, 3).Value) + "日の勤怠入力日、出社時間、退社時間、休憩のいづれかで未入力項目があります"
+        
+        GoTo Error_end
+
+
+ElseIf WorksheetFunction.CountA(Rng3) = 8 Then
+    
+    MsgBox CStr(wsWebKintai.Cells(7, 3).Value) + "日 ～ " + CStr(wsWebKintai.Cells(8, 3).Value) + "日までの勤怠を入力します"
+    i = 7
+    For i = 7 To 8
+        
+        KintaiDay(i) = CInt(wsWebKintai.Cells(i, 3))
+        StartHour(i) = wsWebKintai.Cells(i + 10, 1)
+        StartMin(i) = wsWebKintai.Cells(i + 10, 2)
+        EndHour(i) = wsWebKintai.Cells(i + 10, 3)
+        EndMin(i) = wsWebKintai.Cells(i + 10, 4)
+        Rest(i) = wsWebKintai.Cells(i, 6)
+        Bikou(i) = wsWebKintai.Cells(i, 7)
+
+        Stream.WriteText "kintai_day1 = " + "'" + CStr(KintaiDay(i)) + "'" & vbCrLf
+        Stream.WriteText "start_time1 = " + "'" + CStr(StartHour(i)) + "'" & vbCrLf
+        Stream.WriteText "start_time2 = " + "'" + CStr(StartMin(i)) + "'" & vbCrLf
+        Stream.WriteText "end_time1 = " + "'" + CStr(EndHour(i)) + "'" & vbCrLf
+        Stream.WriteText "end_time2 = " + "'" + CStr(EndMin(i)) + "'" & vbCrLf
+        Stream.WriteText "resttime = " + "'" + CStr(Rest(i)) + "'" & vbCrLf
+        Stream.WriteText "bikou1 = " + "'" + CStr(Bikou(i)) + "'" & vbCrLf
+        Stream.WriteText "kintai_nyuuryoku(kintai_day1,start_time1,start_time2,end_time1,end_time2,resttime,bikou1)" & vbCrLf
+        Stream.WriteText "time.sleep(2)" & vbCrLf
+    
+    Next
+
+        wsWebKintai.Cells(3, 10) = wsWebKintai.Cells(8, 3)
+
+    
+i = 7
+For i = 7 To 8
+        
+    j = 10
+    
+    For j = 10 To 40
+    If wsKinmu.Cells(j, 1).Value = wsWebKintai.Cells(i, 3).Value Then
+       wsKinmu.Cells(j, 3).Value = wsWebKintai.Cells(i + 7, 4).Value
+       wsKinmu.Cells(j, 6).Value = wsWebKintai.Cells(i + 7, 5).Value
+       wsKinmu.Cells(j, 9).Value = wsWebKintai.Cells(i, 6).Value / 60
+    End If
+      
+    Next
+
+Next
+
+
+ElseIf WorksheetFunction.CountA(Rng2) < 8 And WorksheetFunction.CountA(Rng2) > 4 Then
+        
+        MsgBox CStr(wsWebKintai.Cells(7, 3).Value) + "日 ～ " + CStr(wsWebKintai.Cells(8, 3).Value) + "日の勤怠入力日、出社時間、退社時間、休憩のいづれかで未入力項目があります"
+        
+        GoTo Error_end
+
+
+ElseIf WorksheetFunction.CountA(Rng1) = 4 Then
+    
+    MsgBox CStr(wsWebKintai.Cells(7, 3).Value) + "日の勤怠を入力します"
+    
+        KintaiDay(1) = CInt(wsWebKintai.Cells(7, 3))
+        StartHour(1) = wsWebKintai.Cells(17, 1)
+        StartMin(1) = wsWebKintai.Cells(17, 2)
+        EndHour(1) = wsWebKintai.Cells(17, 3)
+        EndMin(1) = wsWebKintai.Cells(17, 4)
+        Rest(1) = wsWebKintai.Cells(7, 6)
+        Bikou(1) = wsWebKintai.Cells(7, 7)
+
+        Stream.WriteText "kintai_day1 = " + "'" + CStr(KintaiDay(1)) + "'" & vbCrLf
+        Stream.WriteText "start_time1 = " + "'" + CStr(StartHour(1)) + "'" & vbCrLf
+        Stream.WriteText "start_time2 = " + "'" + CStr(StartMin(1)) + "'" & vbCrLf
+        Stream.WriteText "end_time1 = " + "'" + CStr(EndHour(1)) + "'" & vbCrLf
+        Stream.WriteText "end_time2 = " + "'" + CStr(EndMin(1)) + "'" & vbCrLf
+        Stream.WriteText "resttime = " + "'" + CStr(Rest(1)) + "'" & vbCrLf
+        Stream.WriteText "bikou1 = " + "'" + CStr(Bikou(1)) + "'" & vbCrLf
+        Stream.WriteText "kintai_nyuuryoku(kintai_day1,start_time1,start_time2,end_time1,end_time2,resttime,bikou1)" & vbCrLf
+        Stream.WriteText "time.sleep(3)" & vbCrLf
+
+        wsWebKintai.Cells(3, 10) = wsWebKintai.Cells(7, 3)
+    
+    j = 10
+    
+    For j = 10 To 40
+    If wsKinmu.Cells(j, 1).Value = wsWebKintai.Cells(7, 3).Value Then
+       wsKinmu.Cells(j, 3).Value = wsWebKintai.Cells(14, 4).Value
+       wsKinmu.Cells(j, 6).Value = wsWebKintai.Cells(14, 5).Value
+       wsKinmu.Cells(j, 9).Value = wsWebKintai.Cells(7, 6).Value / 60
+End If
+      
+    Next
+        
+ElseIf WorksheetFunction.CountA(Rng1) < 4 Then
+        
+        MsgBox CStr(wsWebKintai.Cells(7, 3).Value) + "日の勤怠入力日、出社時間、退社時間、休憩のいづれかで未入力項目があります"
+        
+        GoTo Error_end
+
+End If
+
+ ' 全部の勤怠を入力後、更新をクリック
+        Stream.WriteText "driver.find_element_by_id('btnUpdate').click()" & vbCrLf
+        Stream.WriteText "time.sleep (3)" & vbCrLf
+ 
+ ' ストリームに名前を付けて保存する(1は新規作成 2は上書き保存)
+ Stream.SaveToFile (strFileName_out), 2
+ 
+ ' ストリームを閉じる
+ Stream.Close
+
+Set Stream = Nothing
+
+
+Exit Sub
+
+Error_end:
+
+MsgBox "自動入力を中止します"
+
+
+End Sub
+
