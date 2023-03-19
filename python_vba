@@ -1,0 +1,175 @@
+Option Explicit
+
+Sub CommandButton1_Click()
+
+    Dim intFF_out As Integer            ' FreeFile値_出力用
+    Dim file_path As String             ' Excel保存パス
+    Dim file_name As String             ' 出力ファイル名(IP/パス等)
+    Dim strFileName_out As String       ' 出力するファイル名(フルパス)
+    Dim objFSO As Object
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+    Dim clearRng As Range
+    Dim wbWebKintai As Workbook
+    Dim wsWebKintai As Worksheet
+    Set wsWebKintai = ThisWorkbook.Worksheets("Web勤怠")
+    Set clearRng = wsWebKintai.Range("C8", "G9")
+    Dim Stream As Object                ' .pyファイルを作成する際に文字コードをUTF-8にするために使用
+    
+    file_path = ThisWorkbook.Path
+    file_name = "web_kintai_input.py"
+    strFileName_out = file_path + "\" + file_name
+    
+Set Stream = CreateObject("ADODB.Stream")
+  
+ ' ストリームの文字コードをUTF8に設定する
+ Stream.Charset = "UTF-8"
+ 
+ ' ファイルのタイプ(1:バイナリ 2:テキスト)
+ Stream.Type = 2
+ 
+ ' ストリームを開く
+ Stream.Open
+ 
+ ' ストリームの保存形式をテキスト形式にする
+
+ Stream.WriteText "from selenium import webdriver" & vbCrLf
+ Stream.WriteText "from selenium.webdriver.support.ui import Select" & vbCrLf
+ Stream.WriteText "from selenium.webdriver.common.by import By" & vbCrLf
+ Stream.WriteText "from selenium.webdriver.support.ui import WebDriverWait" & vbCrLf
+ Stream.WriteText "from selenium.webdriver.support import expected_conditions as EC" & vbCrLf
+ Stream.WriteText "from selenium.webdriver.common.keys import Keys" & vbCrLf
+ Stream.WriteText "from webdriver_manager.chrome import ChromeDriverManager" & vbCrLf
+ Stream.WriteText "import time" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "def kintai_nyuuryoku(day,stimehh,stimemm,etimehh,etimemm,rest,bikou):" & vbCrLf
+ Stream.WriteText "    day1 = int(day) - 1" & vbCrLf
+ Stream.WriteText "    kubun = 'ATTEND_DIV_ID__' + str(day1)" & vbCrLf
+ Stream.WriteText "    start_hh = 'START_HH__' + str(day1)" & vbCrLf
+ Stream.WriteText "    start_mm = 'START_MI__' + str(day1)" & vbCrLf
+ Stream.WriteText "    end_hh = 'END_HH__' + str(day1)" & vbCrLf
+ Stream.WriteText "    end_mm = 'END_MI__' + str(day1)" & vbCrLf
+ Stream.WriteText "    rest_mm = 'REST_MI__' + str(day1)" & vbCrLf
+ Stream.WriteText "    bikouran = 'BIKOU__' + str(day1)" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "    elem_search_word1 = driver.find_element_by_id(kubun)" & vbCrLf
+ Stream.WriteText "    select_element1 = Select(elem_search_word1)" & vbCrLf
+ Stream.WriteText "    select_element1.select_by_value('1')" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "    elem_search_word2 = driver.find_element_by_id(start_hh)" & vbCrLf
+ Stream.WriteText "    elem_search_word2.send_keys(stimehh)" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "    elem_search_word3 = driver.find_element_by_id(start_mm)" & vbCrLf
+ Stream.WriteText "    elem_search_word3.send_keys(stimemm)" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "    elem_search_word4 = driver.find_element_by_id(end_hh)" & vbCrLf
+ Stream.WriteText "    elem_search_word4.send_keys(etimehh)" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "    elem_search_word5 = driver.find_element_by_id(end_mm)" & vbCrLf
+ Stream.WriteText "    elem_search_word5.send_keys(etimemm)" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "    elem_search_word6 = driver.find_element_by_id(rest_mm)" & vbCrLf
+ Stream.WriteText "    elem_search_word6.send_keys(rest)" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "    elem_search_btn7 = driver.find_element_by_id(bikouran)" & vbCrLf
+ Stream.WriteText "    elem_search_btn7.click()" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "    elem_search_word7 = driver.find_element_by_id('dialog-bikou')" & vbCrLf
+ Stream.WriteText "    elem_search_word7.send_keys(bikou)" & vbCrLf
+ Stream.WriteText "" & vbCrLf
+ Stream.WriteText "    elem_search_btn8 = driver.find_element_by_xpath(""//div[@class='ui-dialog-buttonset']/button[@type='button']"")" & vbCrLf
+ Stream.WriteText "    elem_search_btn8.click()" & vbCrLf
+
+ ' ストリームに名前を付けて保存する(1は新規作成 2は上書き保存)
+ Stream.SaveToFile (strFileName_out), 1
+ ' ストリームを閉じる
+ Stream.Close
+
+Set Stream = Nothing
+
+Call inputday
+
+With CreateObject("Shell.Application")
+    .ShellExecute strFileName_out
+End With
+
+ThisWorkbook.Save
+
+Call Sleep_15000
+
+MsgBox "入力が完了したら、OKをクリック"
+
+If objFSO.fileexists(strFileName_out) = True Then
+    objFSO.DeleteFile strFileName_out
+End If
+
+Set objFSO = Nothing
+
+Call killtask1
+
+
+End Sub
+
+
+Sub CommandButton2_Click()
+
+
+    Dim intFF_out As Integer            ' FreeFile値_出力用
+    Dim file_path As String             ' Excel保存パス
+    Dim file_name As String             ' 出力ファイル名(IP/パス等)
+    Dim strFileName_out As String       ' 出力するファイル名(フルパス)
+    Dim objFSO As Object
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+    Dim wbWebKintai As Workbook
+    Dim wsWebKintai As Worksheet
+    Set wsWebKintai = ThisWorkbook.Worksheets("Web勤怠")
+    Dim Stream As Object                ' .pyファイルを作成する際に文字コードをUTF-8にするために使用
+    
+    file_path = ThisWorkbook.Path
+    file_name = "web_kintai.py"
+    strFileName_out = file_path + "\" + file_name
+    
+Set Stream = CreateObject("ADODB.Stream")
+  
+ ' ストリームの文字コードをUTF8に設定する
+ Stream.Charset = "UTF-8"
+ 
+ ' ファイルのタイプ(1:バイナリ 2:テキスト)
+ Stream.Type = 2
+ 
+ ' ストリームを開く
+ Stream.Open
+ 
+ ' ストリームの保存形式をテキスト形式にする
+ Stream.WriteText "from selenium import webdriver" & vbCrLf
+ Stream.WriteText "from selenium.webdriver.support.ui import Select" & vbCrLf
+ Stream.WriteText "from selenium.webdriver.common.by import By" & vbCrLf
+ Stream.WriteText "from selenium.webdriver.support.ui import WebDriverWait" & vbCrLf
+ Stream.WriteText "from selenium.webdriver.support import expected_conditions as EC" & vbCrLf
+ Stream.WriteText "from selenium.webdriver.common.keys import Keys" & vbCrLf
+ Stream.WriteText "from webdriver_manager.chrome import ChromeDriverManager" & vbCrLf
+ Stream.WriteText "import time" & vbCrLf
+ 
+ ' ストリームに名前を付けて保存する(1は新規作成 2は上書き保存)
+ Stream.SaveToFile (strFileName_out), 1
+ 
+ ' ストリームを閉じる
+ Stream.Close
+
+Set Stream = Nothing
+    
+Call web_kintai_login
+
+Call Sleep_15000
+
+MsgBox "ログインが完了したら、OKをクリック"
+
+If objFSO.fileexists(strFileName_out) = True Then
+    objFSO.DeleteFile strFileName_out
+End If
+
+Set objFSO = Nothing
+
+Call killtask2
+
+End Sub
+
