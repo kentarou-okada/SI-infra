@@ -1,0 +1,63 @@
+Option Explicit
+
+Private Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As LongPtr)
+ 
+Sub Sleep_1000()
+    Dim time As Long
+    time = 1000
+    
+    Sleep time
+    
+End Sub
+
+Sub Sleep_2000()
+    Dim time As Long
+    time = 2000
+    
+    Sleep time
+    
+End Sub
+
+Sub Sleep_3000()
+    Dim time As Long
+    time = 3000
+    
+    Sleep time
+    
+End Sub
+
+Sub Sleep_10000()
+    Dim time As Long
+    time = 10000
+    
+    Sleep time
+    
+End Sub
+
+Sub Sleep_15000()
+    Dim time As Long
+    time = 15000
+    
+    Sleep time
+    
+End Sub
+
+Sub Sleep_25000()
+    Dim time As Long
+    time = 25000
+    
+    Sleep time
+    
+End Sub
+
+Sub Sleep_60000()
+    Dim time As Long
+    time = 60000
+    
+    Sleep time
+    
+End Sub
+
+
+
+
